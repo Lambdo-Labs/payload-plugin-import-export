@@ -54,7 +54,7 @@ export const importExportPlugin: PluginType = (pluginOptions) => {
     config.collections = [
       ...(config.collections || []).map((collection) => {
         // Add additional collections here
-        if (pluginOptions?.excludeCollections?.includes(collection.slug)) {
+        if (pluginOptions?.collections?.includes(collection.slug)) {
           return collection;
         }
 
