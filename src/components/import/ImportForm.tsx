@@ -27,6 +27,7 @@ export const ImportForm = () => {
   const [file, setFile] = useState<File | null>(null);
   const [data, setData] = useState<Data>([]);
   const [fields, setFields] = useState([""]);
+  const [showForm, setShowForm] = useState(false);
   const [selectedFields, _setSelectedFields] = useState([{ label: "id", value: "id" }]);
   const setSelectedFields: typeof _setSelectedFields = (newVal) => {
     if (newVal === null || newVal.length === 0)
@@ -65,6 +66,7 @@ export const ImportForm = () => {
     setData([]);
     setFields([]);
     setSelectedFields([]);
+    setShowForm(true)
   };
 
   const parseInputFile = async () => {
@@ -133,70 +135,77 @@ export const ImportForm = () => {
       <div className={styles.flex}>
         <h1>Import to {slug.charAt(0).toUpperCase() + slug.slice(1)}</h1>
         <Dropzone mimeTypes={[".csv", ".json"]} onChange={handleFileChange} fileName={file?.name} />
-
-        <section className={[styles.section, styles.fullwidth].join(" ")}>
-          <h4 className={styles.textCenter}>Select Fields</h4>
-          <MultiSelect
-            title="Select Fields"
-            selected={selectedFields}
-            setSelected={setSelectedFields}
-            isDisabled={fields.length <= 1}
-            closeMenuOnSelect={false}
-            options={fields.map((field) => ({ value: field, label: field }))}
-            value={selectedFields.map((field) => ({ value: field, label: field }))}
-            menuPlacement="top"
-            className={fields.length <= 1 ? styles.disabled : ""}
-            styles={reactSelectStyle}
-          />
-        </section>
-
-        <section className={[styles.section, styles.fullwidth].join(" ")}>
-          <Collapsible header={"Preview Data (5 items max)"} initCollapsed={true}>
-            <div className={styles.xScroll}>
-              <table>
-                <thead>
-                  <tr>
-                    {selectedFields.map((field, index) => (
-                      <th key={index}>{field.label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.slice(0, data.length > 5 ? 5 : data.length).map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {selectedFields.map((field, fieldIndex) => {
-                        const value = row[field.value];
-                        return (
-                          <td key={fieldIndex + field.value}>
-                            {typeof value === "object" ? JSON.stringify(value) : value}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Collapsible>
-        </section>
-        <div className={styles.btnGroup}>
+        {
+          showForm ? (
+            <>
+              <section className={[styles.section, styles.fullwidth].join(" ")}>
+              <h4 className={styles.textCenter}>Select Fields</h4>
+              <MultiSelect
+                title="Select Fields"
+                selected={selectedFields}
+                setSelected={setSelectedFields}
+                isDisabled={fields.length <= 1}
+                closeMenuOnSelect={false}
+                options={fields.map((field) => ({ value: field, label: field }))}
+                value={selectedFields.map((field) => ({ value: field, label: field }))}
+                menuPlacement="top"
+                className={fields.length <= 1 ? styles.disabled : ""}
+                styles={reactSelectStyle}
+              />
+              </section>
+              {/* I think the preview data is not neccesary */}
+              {/* <section className={[styles.section, styles.fullwidth].join(" ")}>
+                <Collapsible header={"Preview Data (5 items max)"} initCollapsed={true}>
+                  <div className={styles.xScroll}>
+                    <table>
+                      <thead>
+                        <tr>
+                          {selectedFields.map((field, index) => (
+                            <th key={index}>{field.label}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {data.slice(0, data.length > 5 ? 5 : data.length).map((row, rowIndex) => (
+                          <tr key={rowIndex}>
+                            {selectedFields.map((field, fieldIndex) => {
+                              const value = row[field.value];
+                              return (
+                                <td key={fieldIndex + field.value}>
+                                  {typeof value === "object" ? JSON.stringify(value) : value}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Collapsible>
+              </section> */}
+            </>
+          ) : null
+        }
+     
+        <>
           <RouterLink
             to={backToCollection}
             className={
-              " btn btn--style-primary btn--icon-style-without-border btn--size-medium btn--icon-position-right"
+              "btn btn--style-primary btn--icon-style-without-border btn--size-medium btn--icon-position-right"
             }
           >
             Cancel
           </RouterLink>
+          <br />
 
           <Button
             onClick={handleImport}
             disabled={selectedFields.length <= 1}
-            className={styles.importBtn}
+            className={"btn btn--style-primary btn--icon-style-without-border btn--size-medium btn--icon-position-right"}
           >
             Import
           </Button>
-        </div>
+        </>
       </div>
     </>
   );
@@ -278,12 +287,12 @@ const useStyles = createUseStyles({
     opacity: 0.5,
     cursor: "not-allowed",
   },
-  btnGroup: {
-    display: "flex",
-    gap: "1rem",
-    width: "100%",
-  },
-  importBtn: {
-    flexGrow: "1",
-  },
+  // btnGroup: {
+  //   display: "flex",
+  //   gap: "1rem",
+  //   width: "100%",
+  // },
+  // importBtn: {
+  //   flexGrow: "1",
+  // },
 });
