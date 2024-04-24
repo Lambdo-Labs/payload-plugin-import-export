@@ -1,289 +1,189 @@
-import Papa from "papaparse";
-import { Button, Collapsible } from "payload/components/elements";
-import { useConfig, useLocale } from "payload/components/utilities";
-import { Locale } from "payload/config";
-import React, { useEffect, useState } from "react";
-
+import { Button, Gutter } from "payload/components/elements";
+import { useConfig } from "payload/components/utilities";
+import React, { useEffect, useState } from "react"; 
+import csvtojson from "csvtojson";
 import { Dropzone } from "../dropzone";
 
-import { MultiSelect } from "../multiSelect";
-import { reactSelectStyle } from "../select";
-import { splitResults } from "./utils";
-
-import { toast } from "react-toastify";
-import { unflatten } from "../../utils/flat";
-
-import { createUseStyles } from "react-jss";
-import { useHistory } from "react-router-dom";
-import { PluginTypes } from "../../types";
+import { useTranslation } from "react-i18next"; 
 import { useSlug } from "../../utils/useSlug";
-import Link from "../link";
-import RouterLink from "../link/RouterLink";
-import { useRedirect } from "../../utils/useRedirect";
+import { SelectColumn } from "./SelectColumns";
+import { getExternalFieldToImport, getValueFields } from "./utils/ExtractFields";
+import { ShowTable } from "./ShowTable";
+import { SaveDocuments } from "./Save"; 
+import { FieldSupport, ObjectFormat, TypeSelectFields } from "./utils/type";
+import { ArticleIcon } from "./Graphics/FileIcon";
 
-type Data = Array<Record<string, any>>;
+const readFileAsText = (file: File) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
 
-export const ImportForm = () => {
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+
+    reader.onerror = (error) => {
+      reject(error);
+    };
+
+    reader.readAsText(file);
+  });
+};
+interface ImportProps {
+  closeModal: Function;
+}
+
+export const CSVtoJSON = (data: any, delimiter = ";") => {
+  // Changed the delimiter to ';'
+  const csvData = data.toString("utf8"); // Transform the buffer data to UTF-8 text.
+  return csvtojson({ delimiter }).fromString(csvData);
+};
+export const ImportForm = ({ closeModal }: ImportProps) => {
   const [file, setFile] = useState<File | null>(null);
-  const [data, setData] = useState<Data>([]);
-  const [fields, setFields] = useState([""]);
-  const [selectedFields, _setSelectedFields] = useState([{ label: "id", value: "id" }]);
-  const setSelectedFields: typeof _setSelectedFields = (newVal) => {
-    if (newVal === null || newVal.length === 0)
-      return _setSelectedFields([{ label: "id", value: "id" }]);
-    _setSelectedFields(newVal);
-  };
+  const [csv, setCsv] = useState<any[]>([]);
+  const [csvColumns, setCsvColumns] = useState<Array<string>>([]);
+  const [fields, setFields] = useState<any>([]);
+  const [labels, setLabels] = useState<FieldSupport[]>([]);
+  const [showSave, setShowSave] = useState<boolean>(false);
+  const [selectedFields, _setSelectedFields] = useState<{ [key: string]: string }[]>([]);
 
-  const styles = useStyles();
+  const [steps, setStep] = useState<1 | 2 | 3>(1);
+  const [objectFormat, setObjectFormat] = useState<ObjectFormat[]>([]);
   const config = useConfig();
-  const paths = window.location.pathname.split("/");
   const slug = useSlug();
-  const backToCollection = `${paths.slice(0, paths.length - 1).join("/")}`;
-  const locale = useLocale();
-  const history = useHistory();
-  const redirect = useRedirect();
+  const baseClass = "file-field";
+
+  //Get Columns
   useEffect(() => {
-    if (file) {
-      parseInputFile();
+    if (csv.length > 0) {
+      const keys = Object.keys(csv[0]);
+      setCsvColumns(keys);
     }
-  }, [file]);
+  }, [csv]);
 
-  if (!(config && config.serverURL)) {
-    return null;
-  }
-  const {
-    routes: { api },
-    serverURL,
-    custom,
-  } = config;
-  const importExportPluginConfig = custom.importExportPluginConfig as PluginTypes;
-
-  const handleFileChange = async (list: FileList) => {
-    setFile(list[0]);
-
-    // Reset data and fields when a new file is selected
-    setData([]);
-    setFields([]);
-    setSelectedFields([]);
-  };
-
-  const parseInputFile = async () => {
-    if (!file) {
-      toast.error("Please select a file first.");
-      return;
-    }
-
-    if (file.type === "text/csv") {
-      // Parsing CSV file
-
-      Papa.parse<Data>(file, {
-        header: true,
-        complete: (result) => {
-          const data = result?.data || [];
-          const unflattenedData = data.map((doc) => unflatten(doc));
-          setData(unflattenedData);
-          setFields(Object.keys(unflattenedData[0] || {}));
-        },
-      });
-    } else if (file.type === "application/json") {
-      // Fetching JSON data
-      const response = await fetch(URL.createObjectURL(file)).then((res) => res.json());
-
-      setData(response);
-      setFields(Object.keys(response[0] || {}));
+  useEffect(() => {
+    const collection = config.collections.find((collection) => collection.slug === slug);
+    if (!collection) {
+      console.error("collection undefined");
     } else {
-      alert("Unsupported file format. Please select a CSV or JSON file.");
-    }
-  };
-
-  const handleImport = async () => {
-    if (!data) return;
-
-    const selectedData = data.map((row) => {
-      const selectedRow: Record<string, any> = selectedFields.includes({ label: "id", value: "id" })
-        ? {}
-        : { id: row.id };
-      selectedFields.forEach((field) => {
-        selectedRow[field.value] = row[field.value];
+      const fields = getExternalFieldToImport(collection);
+      const labelsFormat: FieldSupport[] = [];
+      fields.forEach((field: FieldSupport) => {
+        if (field.type !== "group" && field.type !== "array") {
+          labelsFormat.push(field);
+        }
       });
-      return selectedRow;
-    });
-    try {
-      const res = (await fetch(`${serverURL}${api}/${slug}/import?locale=${locale.code}`, {
-        method: "PATCH",
-        body: JSON.stringify(selectedData),
-        headers: {
-          "Content-type": "application/json",
-        },
-        credentials: "include",
-      }).then((res) => res.json())) as PromiseSettledResult<{ id: string | number }>[];
-
-      displayResults(res, slug, locale);
-      if (!!importExportPluginConfig.redirectAfterImport) {
-        redirect(backToCollection);
-      }
-    } catch (err) {
-      //no error should be thrown because we use Promise.allSettled on API
-      console.error(err);
+      setLabels(labelsFormat);
+      setFields(fields);
     }
+  }, []);
+
+  useEffect(() => {}, [selectedFields]);
+  const handleFileSelection = React.useCallback(
+    async (files: FileList) => {
+      const fileToUpload = files?.[0];
+      const strtJson = await readFileAsText(fileToUpload);
+      const dataColumn = await CSVtoJSON(strtJson, ",");
+      setCsv(dataColumn);
+      setFile(fileToUpload);
+    },
+    [setFile],
+  );
+
+  const handleFileRemoval = React.useCallback(() => {
+    setFile(null);
+    setCsvColumns([]);
+  }, [setFile]);
+
+  const setOptionColumns = (selectFieldsToColumns: TypeSelectFields) => {
+    const valuesObjectArray = csv.map((row) => {
+      const valuesObject = getValueFields(row, selectFieldsToColumns);
+      return valuesObject;
+    });
+    setObjectFormat(valuesObjectArray);
+    setStep(2);
+  };
+  const save = (csvFormat: ObjectFormat[]) => {
+    setObjectFormat(csvFormat);
+    setStep(3);
   };
 
+  const { t } = useTranslation("import_products");
   return (
     <>
-      <div className={styles.flex}>
-        <h1>Import to {slug.charAt(0).toUpperCase() + slug.slice(1)}</h1>
-        <Dropzone mimeTypes={[".csv", ".json"]} onChange={handleFileChange} fileName={file?.name} />
+      <Gutter>
+        <h1>{t("labels.import")}</h1>
+        <div>
+          <Gutter>
+            <div className="field-type file-field">
+              <div className="file-field__upload">
+                {!file && (
+                  <Dropzone
+                    onChange={handleFileSelection}
+                    mimeTypes={["text/csv"]}
+                    className="file-field"
+                  ></Dropzone>
+                )}
 
-        <section className={[styles.section, styles.fullwidth].join(" ")}>
-          <h4 className={styles.textCenter}>Select Fields</h4>
-          <MultiSelect
-            title="Select Fields"
-            selected={selectedFields}
-            setSelected={setSelectedFields}
-            isDisabled={fields.length <= 1}
-            closeMenuOnSelect={false}
-            options={fields.map((field) => ({ value: field, label: field }))}
-            value={selectedFields.map((field) => ({ value: field, label: field }))}
-            menuPlacement="top"
-            className={fields.length <= 1 ? styles.disabled : ""}
-            styles={reactSelectStyle}
-          />
-        </section>
-
-        <section className={[styles.section, styles.fullwidth].join(" ")}>
-          <Collapsible header={"Preview Data (5 items max)"} initCollapsed={true}>
-            <div className={styles.xScroll}>
-              <table>
-                <thead>
-                  <tr>
-                    {selectedFields.map((field, index) => (
-                      <th key={index}>{field.label}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.slice(0, data.length > 5 ? 5 : data.length).map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {selectedFields.map((field, fieldIndex) => {
-                        const value = row[field.value];
-                        return (
-                          <td key={fieldIndex + field.value}>
-                            {typeof value === "object" ? JSON.stringify(value) : value}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                {file && (
+                  <React.Fragment>
+                    <div className="">
+                      <div className={`${baseClass}__thumbnail-wrap`}>
+                        <ArticleIcon></ArticleIcon>
+                      </div>
+                    </div>
+                    <div className={`${baseClass}__file-adjustments`}>
+                      <input
+                        className={`${baseClass}__filename`}
+                        disabled
+                        type="text"
+                        value={file.name}
+                      />
+                    </div>
+                    <Button
+                      buttonStyle="icon-label"
+                      className={`${baseClass}__remove`}
+                      icon="x"
+                      iconStyle="with-border"
+                      onClick={handleFileRemoval}
+                      round
+                    />
+                  </React.Fragment>
+                )}
+              </div>
             </div>
-          </Collapsible>
-        </section>
-        <div className={styles.btnGroup}>
-          <RouterLink
-            to={backToCollection}
-            className={
-              " btn btn--style-primary btn--icon-style-without-border btn--size-medium btn--icon-position-right"
-            }
-          >
-            Cancel
-          </RouterLink>
-
-          <Button
-            onClick={handleImport}
-            disabled={selectedFields.length <= 1}
-            className={styles.importBtn}
-          >
-            Import
-          </Button>
+          </Gutter>
         </div>
-      </div>
+        <div className="collection-list">
+          {steps === 1 && csvColumns.length > 0 ? (
+            <SelectColumn
+              fields={fields}
+              setShowSave={setShowSave}
+              key={"test"}
+              csvColumns={csvColumns}
+              setPreferencesColumns={setOptionColumns}
+              showSave={showSave}
+              closeModal={closeModal}
+            ></SelectColumn>
+          ) : (
+            ""
+          )}
+        </div>
+        <div className="collection-list">
+          {steps === 2 ? (
+            <ShowTable
+              fields={labels}
+              csvObject={objectFormat}
+              closeModal={closeModal}
+              save={save}
+            ></ShowTable>
+          ) : (
+            ""
+          )}
+        </div>
+        <div className="collection-list">
+          {steps == 3 && <SaveDocuments csvData={objectFormat} slug={slug}></SaveDocuments>}
+        </div>
+      </Gutter>
     </>
   );
 };
-
-function displayResults(
-  res: PromiseSettledResult<{ id: string | number }>[],
-  slug: string,
-  locale: Locale,
-) {
-  const [success, errors] = splitResults(res);
-
-  success.length > 0 && toast.success(`Imported ${success.length} items successfully`);
-
-  if (errors.length > 0) {
-    const csv = Papa.unparse(
-      errors.map((err) => ({
-        data: err.reason.data,
-        status: err.status,
-        reason: err.reason.name,
-      })),
-    );
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const csvDownloadUrl = URL.createObjectURL(blob);
-    const date = new Date().toISOString().replace(":", "");
-    const lang = locale.code ? `_${locale.code}` : "";
-    toast.error(
-      <div>
-        {`Failed to import ${errors.length} items`}
-        <Link
-          href={`data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(errors))}`}
-          download={`Import_Errors_${slug}${lang}_${date}.json`}
-        >
-          Click to Download as JSON
-        </Link>
-        <Link href={csvDownloadUrl} download={`Import_Errors_${slug}${lang}_${locale}_${date}.csv`}>
-          Click to Download as CSV
-        </Link>
-      </div>,
-    );
-  }
-}
-
-const useStyles = createUseStyles({
-  select: {
-    width: "clamp(150px, 80vw, 400px)",
-  },
-  fullwidth: {
-    width: "100%",
-  },
-  textCenter: {
-    textAlign: "center",
-  },
-  flex: {
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: "1rem",
-    margin: "1rem",
-  },
-  section: {
-    margin: "var(--base) 0",
-  },
-  xScroll: {
-    overflowX: "scroll",
-  },
-  btn: {
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-  },
-  icon: {
-    width: "1.5rem",
-    height: "1.5rem",
-  },
-  disabled: {
-    opacity: 0.5,
-    cursor: "not-allowed",
-  },
-  btnGroup: {
-    display: "flex",
-    gap: "1rem",
-    width: "100%",
-  },
-  importBtn: {
-    flexGrow: "1",
-  },
-});
