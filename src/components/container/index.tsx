@@ -1,39 +1,39 @@
-import React, { useState } from "react";
-import { createUseStyles } from "react-jss";
-import { ExportButtonList } from "../export";
-import ExportExpand from "../export/ExportExpand";
-import RouterLink from "../link/RouterLink";
+import React, { useState } from 'react';
+import { createUseStyles } from 'react-jss';
+import { Button } from 'payload/components';
+import { ImportForm } from '../import/ImportForm';
+import { Drawer } from 'payload/components/elements';
+import { useModal } from '@faceless-ui/modal';
 
+import { useTranslation } from 'react-i18next';
 export type Ctx = any;
-
+ 
 export function Container(ctx: Ctx) {
-  const [openExport, setOpenExport] = useState(false);
-  const styles = useStyles();
-
+  const { toggleModal } = useModal();
+  const modalCreateSlug = 'modal-create'; 
+  const { t } = useTranslation('import_products');
   return (
     <>
-      <div className={styles.container}>
-        <ExportButtonList onClick={() => setOpenExport((prev) => !prev)} open={openExport} />
-        <RouterLink
-          to={ctx.collection.slug + "/import"}
+      <div className="gutter--left gutter--right">
+        <Button
+          size="small"
+          onClick={() => toggleModal(modalCreateSlug)}
           className="pill pill--style-light pill--has-link pill--has-action"
         >
-          <span className="pill__label">Import</span>
-        </RouterLink>
+          <span className="pill__label">{t('labels.import')}</span>
+        </Button>
       </div>
-      <ExportExpand open={openExport} collection={ctx.collection} />
+      <Drawer
+        slug={modalCreateSlug}
+        gutter
+        children={
+          <ImportForm closeModal={() => toggleModal(modalCreateSlug)} />
+        }
+      ></Drawer>
     </>
   );
 }
 
 export default Container;
 
-const useStyles = createUseStyles({
-  container: {
-    display: "flex",
-    justifyContent: "flex-end",
-    gap: "var(--base)",
-    backgroundColor: "var(--theme-elevation-50)",
-    padding: "calc(var(--base) / 2)",
-  },
-});
+ 
