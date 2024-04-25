@@ -46,7 +46,7 @@ function ViewWrapper(props: AdminViewProps) {
           </h1>
         </main>
       ) : (
-        <ImportForm />
+        <ImportForm closeModal={() => {}} />
       )}
       <ToastContainer position="bottom-center" autoClose={30000} />
     </DefaultTemplate>

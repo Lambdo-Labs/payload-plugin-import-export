@@ -73,7 +73,7 @@ export const importExportPlugin: PluginType = (pluginOptions) => {
                 List: {
                   ...collection.admin?.components?.views?.List,
                   actions: (
-                    ((collection.admin?.components?.views?.List) as TypeList).actions|| [] 
+                    ((collection.admin?.components?.views?.List) as TypeList)?.actions|| [] 
                   ).concat(ButtonList),
                 },
               },
