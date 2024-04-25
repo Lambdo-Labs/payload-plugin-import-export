@@ -51,6 +51,7 @@ export default buildConfig({
       enabled: true,
       canImport: (user: User) => user.roles.includes("admin"),
       redirectAfterImport: true,
+      habilityCollection: [Examples]
     }),
   ],
   db: mongooseAdapter({

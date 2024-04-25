@@ -1,12 +1,13 @@
-import type { Plugin } from "payload/config";
+import type { Plugin } from 'payload/config';
 
-import ButtonList from "./components/container";
-import { importEndpointConfig } from "./endpoints/import";
-import type { PluginTypes } from "./types";
-import { extendWebpackConfig } from "./webpack";
-import { ImportForm } from "./components/import/ImportForm";
-import { importView } from "./view/importView";
-import ImportList from "./components/import";
+import ButtonList from './components/container';
+import { importEndpointConfig } from './endpoints/import';
+import type { PluginTypes, TypeList } from './types';
+import { extendWebpackConfig } from './webpack';
+import { ImportForm } from './components/import/ImportForm';
+import { importView } from './view/importView';
+import ImportList from './components/import';
+import { import_products_en, import_products_es } from './utils/localized';
 
 type PluginType = (pluginOptions?: PluginTypes) => Plugin;
 
@@ -46,7 +47,7 @@ export const importExportPlugin: PluginType = (pluginOptions) => {
     }
     if (config.serverURL === undefined) {
       console.error(
-        "\x1b[101m \x1b[1m ERROR - Payload-Plugin-Import-Export: Please add a 'serverURL' in your payload config and restart the server \x1b[0m",
+        "\x1b[101m \x1b[1m ERROR - Payload-Plugin-Import-Export: Please add a 'serverURL' in your payload config and restart the server \x1b[0m"
       );
 
       return config;
@@ -54,27 +55,34 @@ export const importExportPlugin: PluginType = (pluginOptions) => {
     config.collections = [
       ...(config.collections || []).map((collection) => {
         // Add additional collections here
-        if (pluginOptions?.collections?.includes(collection.slug)) {
+        if (!pluginOptions?.habilityCollection?.includes(collection)) {
           return collection;
         }
 
         return {
           ...collection,
-          endpoints: (collection.endpoints || []).concat([importEndpointConfig]),
+          endpoints: (collection.endpoints || []).concat([
+            importEndpointConfig,
+          ]),
           admin: {
             ...collection.admin,
             components: {
               ...collection.admin?.components,
-              BeforeListTable: (collection.admin?.components?.BeforeListTable || [])?.concat(
-                ButtonList,
-              ),
+              views: {
+                ...(collection.admin?.components?.views || []),
+                List: {
+                  ...collection.admin?.components?.views?.List,
+                  actions: (
+                    ((collection.admin?.components?.views?.List) as TypeList).actions|| [] 
+                  ).concat(ButtonList),
+                },
+              },
             },
           },
         };
       }),
       // Add additional collections here
     ];
-
     config.endpoints = [
       ...(config.endpoints || []), //.concat(importEndpointConfig),
 
@@ -101,6 +109,20 @@ export const importExportPlugin: PluginType = (pluginOptions) => {
       ...config.custom,
       importExportPluginConfig: pluginOptions,
     };
+    config.i18n = {
+      ...(config.i18n || {}),
+      resources: {
+        ...(config.i18n?.resources || {}),
+        en: {
+          ...(config.i18n?.resources?.en || {}),
+          import_products: import_products_en,
+        },
+        es: {
+          ...(config.i18n?.resources?.es || {}),
+          import_products: import_products_es,
+        },
+      },
+    }; 
     return config;
   };
 };
