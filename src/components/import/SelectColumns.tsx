@@ -50,6 +50,7 @@ export const SelectColumn = ({
   }, [fields]);
   useEffect(() => {
     const show = validRequiredField(selectedFields);
+    console.log(selectedFields)
     setShowSave(show);
   }, [selectedFields]);
 

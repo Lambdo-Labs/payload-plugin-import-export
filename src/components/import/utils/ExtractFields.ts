@@ -60,11 +60,6 @@ export const getValueFields = (
         ];
       } else {
         if (typeof objectFields[key].property === 'string') {
-          console.log(
-            objectFields[key].property,
-            csvRow[objectFields[key].property as string],
-            ':::::: Csv Row'
-          );
           fieldsObject[key] = csvRow[objectFields[key].property as string];
         }
       }
