@@ -7,7 +7,7 @@ export const import_products_es = {
 
   lables: {
     import: 'Importar Csv',
-    create: 'Se crearán: ',
+    create: 'serán creados ',
     documents: 'Documentos',
   },
 };
@@ -19,7 +19,7 @@ export const import_products_en = {
   },
   labels: {
     import: 'Csv Import',
-    create: 'Will be created: ',
+    create: 'will be created ',
     documents: 'Documents',
   },
 };
