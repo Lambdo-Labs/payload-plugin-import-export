@@ -39,8 +39,7 @@ export const SaveDocuments = ({ csvData, slug, closeModal }: SaveProps) => {
             },
           },
         );
-        const json = await result.json();
-        console.log(json, "Json");
+        const json = await result.json(); 
         if (result.status === 201 || result.status === 200) {
           setSuccess([...success, json.doc.id]);
         } else {
