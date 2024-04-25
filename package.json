@@ -22,7 +22,8 @@
     "lint:fix": "eslint --fix --ext .ts,.tsx src",
     "clean": "rimraf dist && rimraf dev/yarn.lock",
     "prepublishOnly": "yarn clean && yarn build",
-    "dev": "yalc-watch"
+    "dev": "yalc-watch",
+    "preinstall": "tsc"
   },
   "yalcWatch": {
     "watchFolder": "dist",
