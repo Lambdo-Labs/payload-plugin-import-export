@@ -134,8 +134,8 @@ export const Row = ({ field, csvColumns, setSelecteOption }: RowsProps) => {
   };
   const getLabel = () => {
     const label =  field.label && field.label[locale.code as keyof typeof field.label] ? field.label[locale.code as keyof typeof field.label] : field.label
-    if (isRequired) return `${label} *`
-    else return label;
+    if (isRequired) return `${label?.toString()} *`
+    else return label?.toString();
   };
   const showSelect = (value: boolean) => {
     setRequired(value);
