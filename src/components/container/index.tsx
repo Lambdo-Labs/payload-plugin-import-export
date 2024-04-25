@@ -20,7 +20,7 @@ export function Container(ctx: Ctx) {
           onClick={() => toggleModal(modalCreateSlug)}
           className="pill pill--style-light pill--has-link pill--has-action"
         >
-          <span className="pill__label">{t('lables.import')}</span>
+          <span className="pill__label">{t('labels.import')}</span>
         </Button>
       </div>
       <Drawer
