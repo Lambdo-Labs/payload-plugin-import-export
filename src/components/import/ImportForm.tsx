@@ -1,15 +1,15 @@
 import { Button, Gutter } from "payload/components/elements";
 import { useConfig } from "payload/components/utilities";
-import React, { useEffect, useState } from "react"; 
+import React, { useEffect, useState } from "react";
 import csvtojson from "csvtojson";
 import { Dropzone } from "../dropzone";
 
-import { useTranslation } from "react-i18next"; 
+import { useTranslation } from "react-i18next";
 import { useSlug } from "../../utils/useSlug";
 import { SelectColumn } from "./SelectColumns";
 import { getExternalFieldToImport, getValueFields } from "./utils/ExtractFields";
 import { ShowTable } from "./ShowTable";
-import { SaveDocuments } from "./Save"; 
+import { SaveDocuments } from "./Save";
 import { FieldSupport, ObjectFormat, TypeSelectFields } from "./utils/type";
 import { ArticleIcon } from "./Graphics/FileIcon";
 
@@ -181,7 +181,13 @@ export const ImportForm = ({ closeModal }: ImportProps) => {
           )}
         </div>
         <div className="collection-list">
-          {steps == 3 && <SaveDocuments csvData={objectFormat} slug={slug}></SaveDocuments>}
+          {steps == 3 && (
+            <SaveDocuments
+              csvData={objectFormat}
+              slug={slug}
+              closeModal={closeModal}
+            ></SaveDocuments>
+          )}
         </div>
       </Gutter>
     </>

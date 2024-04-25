@@ -11,8 +11,9 @@ import { useTranslation } from "react-i18next";
 interface SaveProps {
   slug: string;
   csvData: { [key: string]: any }[];
+  closeModal: Function
 }
-export const SaveDocuments = ({ csvData, slug }: SaveProps) => {
+export const SaveDocuments = ({ csvData, slug, closeModal }: SaveProps) => {
   const [success, setSuccess] = useState<string[]>([]);
   const [error, setError] = useState<any[]>([]);
   const [show, setShow] = useState(false);
@@ -95,7 +96,7 @@ export const SaveDocuments = ({ csvData, slug }: SaveProps) => {
             <Button onClick={saveData}>{t("actions.save")}</Button>
             <br />
             <Button
-              to={backToCollection}
+              onClick={() => closeModal()}
               buttonStyle="secondary"
               className={
                 "btn preview-btn btn--style-secondary btn--icon-style-without-border btn--size-small btn--icon-position-right"
