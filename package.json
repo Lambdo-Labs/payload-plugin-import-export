@@ -23,7 +23,7 @@
     "clean": "rimraf dist && rimraf dev/yarn.lock",
     "prepublishOnly": "yarn clean && yarn build",
     "dev": "yalc-watch",
-    "postinstall": "tsc"
+    "postinstall": "yarn install && tsc"
   },
   "yalcWatch": {
     "watchFolder": "dist",
