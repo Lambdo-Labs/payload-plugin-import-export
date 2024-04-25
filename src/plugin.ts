@@ -1,7 +1,6 @@
 import type { Plugin } from 'payload/config';
 
-import ButtonList from './components/container';
-import { importEndpointConfig } from './endpoints/import';
+import ButtonList from './components/container'; 
 import type { PluginTypes, TypeList } from './types';
 import { extendWebpackConfig } from './webpack';
 import { ImportForm } from './components/import/ImportForm';
@@ -61,9 +60,6 @@ export const importExportPlugin: PluginType = (pluginOptions) => {
 
         return {
           ...collection,
-          endpoints: (collection.endpoints || []).concat([
-            importEndpointConfig,
-          ]),
           admin: {
             ...collection.admin,
             components: {
