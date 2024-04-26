@@ -7,6 +7,7 @@ export const getFields = (
   omitsNamesColumns = ['createdAt', 'updatedAt', '_status'],
   omitsTypeColumns = ['blocks', 'upload', 'relationship']
 ) => {
+  console.log(object)
   for (let key of Object.keys(object)) {
     if (key === 'fields') {
       for (let field of object[key]) {
@@ -16,7 +17,7 @@ export const getFields = (
         )
           continue;
         if (field.type !== 'ui') {
-          if (field.type !== 'tabs') {
+          if (field.type !== 'tabs' && field.type !== 'row') {
             fieldsResult.push(field);
           } else {
             getFields(field, fieldsResult);
