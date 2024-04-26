@@ -16,19 +16,13 @@ export const getFields = (
         )
           continue;
         if (field.type !== 'ui') {
-          if (field.type !== 'tabs') {
+          if (field.type !== 'tabs' && field.type !== 'row') {
             fieldsResult.push(field);
           } else {
             getFields(field, fieldsResult);
           }
         }
       }
-    } else if (Array.isArray(object[key])) {
-      for (let tempObject of object[key]) {
-        getFields(tempObject, fieldsResult);
-      }
-    } else if (typeof object[key] === 'object') {
-      getFields(object[key], fieldsResult);
     }
   }
   return fieldsResult;
