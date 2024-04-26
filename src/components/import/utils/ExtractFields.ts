@@ -7,7 +7,6 @@ export const getFields = (
   omitsNamesColumns = ['createdAt', 'updatedAt', '_status'],
   omitsTypeColumns = ['blocks', 'upload', 'relationship']
 ) => {
-  console.log(object)
   for (let key of Object.keys(object)) {
     if (key === 'fields') {
       for (let field of object[key]) {
@@ -24,12 +23,6 @@ export const getFields = (
           }
         }
       }
-    } else if (Array.isArray(object[key])) {
-      for (let tempObject of object[key]) {
-        getFields(tempObject, fieldsResult);
-      }
-    } else if (typeof object[key] === 'object') {
-      getFields(object[key], fieldsResult);
     }
   }
   return fieldsResult;
